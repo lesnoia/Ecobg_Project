@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-4 p-4 p-md-5 rounded-12 shadow-sm" style="background:linear-gradient(135deg, rgba(96,165,250,.15), rgba(34,197,94,.12)); border:1px solid #1f2937;">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+    <div>
+      <h1 class="mb-2">ЭкоБарахолка — отдавайте, меняйте, перерабатывайте</h1>
+      <div class="text-muted">Помогаем вещам найти вторую жизнь и уменьшить мусор. Разместите своё объявление уже сейчас.</div>
+    </div>
+    <div>
+      <a href="{{ url_for('main.create_item') }}" class="btn btn-success btn-lg">Добавить объявление</a>
+    </div>
+  </div>
+  </section>
+
+<h2 class="mb-3">Последние объявления</h2>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for item in items %}
+        <div class="col">
+            <div class="card h-100 overflow-hidden">
+                <div style="aspect-ratio:16/9; background:linear-gradient(135deg, #1f2937, #0b1220); display:flex; align-items:center; justify-content:center; color:#9ca3af;">
+                  <span>Фото будет здесь</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.title }}</h5>
+                    <p class="card-text text-muted">{{ item.category.name if item.category else "Без категории" }}</p>
+                    <p class="card-text">{{ item.description[:120] }}{% if item.description|length > 120 %}...{% endif %}</p>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">
+                        {% if item.is_free %}
+                            <span class="badge bg-success">Бесплатно</span>
+                        {% elif item.price %}
+                            <span class="badge bg-primary">{{ item.price }} ₽</span>
+                        {% else %}
+                            <span class="badge bg-secondary">По договорённости</span>
+                        {% endif %}
+                    </span>
+                    <a href="{{ url_for('main.item_detail', item_id=item.id) }}" class="btn btn-sm btn-primary">Подробнее</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="card p-4 text-center">
+          <div class="mb-2">Пока нет объявлений</div>
+          <a class="btn btn-success" href="{{ url_for('main.create_item') }}">Стать первым</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

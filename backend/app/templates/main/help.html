@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Справка</h2>
+<div class="card">
+  <div class="card-body">
+    {% if info and info.value %}
+      <div style="white-space: pre-wrap;">{{ info.value }}</div>
+    {% else %}
+      <p class="text-muted mb-0">Справочная информация пока не добавлена.</p>
+    {% endif %}
+  </div>
+</div>
+{% if current_user.is_authenticated and current_user.has_role('admin') %}
+  <a class="btn btn-outline-secondary mt-3" href="{{ url_for('main.edit_help') }}">Редактировать справку</a>
+{% endif %}
+{% endblock %}

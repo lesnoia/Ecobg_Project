@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Пользователи и роли</h2>
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="post" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Пользователь</label>
+        <input name="username" class="form-control" placeholder="Логин пользователя" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Роль</label>
+        <select name="role" class="form-select">
+          {% for r in roles %}
+            <option value="{{ r.name }}">{{ r.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button name="action" value="add" class="btn btn-success w-50" type="submit">Выдать</button>
+        <button name="action" value="remove" class="btn btn-outline-secondary w-50" type="submit">Снять</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Список пользователей</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Логин</th>
+            <th>Имя</th>
+            <th>Email</th>
+            <th>Роли</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.full_name or "—" }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% set names = [] %}
+              {% for link in u.roles %}
+                {% set _ = names.append(link.role.name) %}
+              {% endfor %}
+              {{ names|join(', ') if names else '—' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

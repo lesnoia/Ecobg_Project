@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h2 class="mb-2">{{ item.title }}</h2>
+    <p class="text-muted">Добавлено {{ item.created_at.strftime('%d.%m.%Y') if item.created_at else '' }}</p>
+
+    <div class="card mb-3 shadow-sm rounded-12">
+      <div class="card-body">
+        <p class="mb-0">{{ item.description }}</p>
+      </div>
+    </div>
+
+    <div class="card mb-3 shadow-sm rounded-12">
+      <div class="card-header">Характеристики</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div><strong>Категория:</strong> {{ item.category.name if item.category else 'Не указана' }}</div>
+            <div><strong>Состояние:</strong> {{ {'new':'Новое','like_new':'Как новое','used':'Б/У','needs_repair':'Требует ремонта'}.get(item.condition, item.condition) }}</div>
+          </div>
+          <div class="col-md-6">
+            <div><strong>Статус:</strong>
+              <span class="badge {% if item.status=='available' %}bg-success{% elif item.status=='reserved' %}bg-warning text-dark{% elif item.status=='donated' %}bg-primary{% elif item.status=='recycled' %}bg-secondary{% else %}bg-light text-dark{% endif %}">
+                {{ {'available':'Доступно','reserved':'Зарезервировано','donated':'Подарено','recycled':'Переработано'}.get(item.status, item.status) }}
+              </span>
+            </div>
+            {% if item.is_free %}
+              <div class="mt-1"><span class="badge bg-success">Отдаётся бесплатно</span></div>
+            {% elif item.price %}
+              <div class="mt-1"><span class="badge bg-primary">{{ '%.2f'|format(item.price) }} ₽</span></div>
+            {% endif %}
+            {% if item.is_exchangeable %}
+              <div class="mt-1"><span class="badge bg-info">Возможен обмен</span></div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if item.hazard_class %}
+    <div class="card mb-3 border-warning">
+      <div class="card-header bg-warning bg-opacity-25">Класс опасности</div>
+      <div class="card-body">
+        <div><strong>{{ item.hazard_class.name }}</strong></div>
+        <div class="text-muted">{{ item.hazard_class.description }}</div>
+        {% if item.recycling_method %}
+          <hr>
+          <div class="fw-bold">Рекомендации по утилизации</div>
+          <div>{{ item.recycling_method.instructions }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card mb-3 shadow-sm rounded-12">
+      <div class="card-header">Действия</div>
+      <div class="card-body">
+        {% if current_user.is_authenticated %}
+          {% if current_user.id == item.owner_id %}
+            {% if item.status == 'available' %}
+              <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#donateModal">Отметить как подаренное</button>
+              <button class="btn btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#recycleModal">Отметить как переработанное</button>
+            {% endif %}
+          {% else %}
+            {% if item.status == 'available' %}
+              {% if item.is_exchangeable %}
+                <button class="btn btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#exchangeModal">Предложить обмен</button>
+              {% endif %}
+              {% if item.is_free %}
+                <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#getFreeModal">Забрать бесплатно</button>
+              {% endif %}
+              {% if (not item.is_free) and item.price %}
+                <form method="post" action="{{ url_for('main.buy_item', item_id=item.id) }}" class="mb-2">
+                  <button class="btn btn-success w-100" type="submit">Купить за {{ '%.2f'|format(item.price) }} ₽</button>
+                </form>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% else %}
+          <a class="btn btn-primary w-100" href="{{ url_for('auth.login', next=request.path) }}">Войдите, чтобы взаимодействовать</a>
+        {% endif %}
+        <button class="btn btn-outline-secondary w-100" onclick="window.print()">Распечатать</button>
+      </div>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.id == item.owner_id and incoming_requests %}
+    <div class="card mb-3 shadow-sm rounded-12">
+      <div class="card-header">Входящие заявки</div>
+      <div class="card-body">
+        <div class="d-flex flex-column gap-2">
+          {% for r in incoming_requests %}
+            <div class="border rounded-12 p-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-bold">От: {{ r.requester.username }}</div>
+                  <div class="text-muted small">{{ r.created_at.strftime('%d.%m.%Y %H:%M') if r.created_at else '' }}</div>
+                  <div class="small">{{ r.message or 'Заявка' }}</div>
+                  {% if r.offered_item %}
+                    <div class="small text-info">Предложено к обмену: «{{ r.offered_item.title }}»</div>
+                  {% else %}
+                    <div class="small text-info">Тип: Покупка</div>
+                  {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                  <form method="post" action="{{ url_for('main.accept_request', req_id=r.id) }}">
+                    <button class="btn btn-sm btn-success" type="submit">Подтвердить</button>
+                  </form>
+                  <form method="post" action="{{ url_for('main.decline_request', req_id=r.id) }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">Отклонить</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm rounded-12">
+      <div class="card-header">Владелец</div>
+      <div class="card-body">
+        <div class="fw-bold">{{ item.owner.username }}</div>
+        {% if item.owner.full_name %}
+          <div class="text-muted">{{ item.owner.full_name }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_authenticated and current_user.id != item.owner_id and item.status == 'available' and item.is_exchangeable %}
+<div class="modal fade" id="exchangeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" action="{{ url_for('main.request_exchange', item_id=item.id) }}" method="post">
+      {{ exchange_form.hidden_tag() }}
+      <div class="modal-header">
+        <h5 class="modal-title">Предложить обмен</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Ваша вещь</label>
+          {{ exchange_form.offered_item_id(class='form-select') }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Сообщение</label>
+          {{ exchange_form.message(class='form-control', rows='3') }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if current_user.is_authenticated and current_user.id == item.owner_id and item.status == 'available' %}
+<div class="modal fade" id="donateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" action="{{ url_for('main.donate_item', item_id=item.id) }}" method="post">
+      {{ donation_form.hidden_tag() }}
+      <div class="modal-header">
+        <h5 class="modal-title">Подтвердить передачу в дар</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Комментарий</label>
+          {{ donation_form.notes(class='form-control', rows='3') }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-success">Подтвердить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="recycleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" action="{{ url_for('main.mark_recycled', item_id=item.id) }}" method="post">
+      {{ recycling_form.hidden_tag() }}
+      <div class="modal-header">
+        <h5 class="modal-title">Отметить как переработанное</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Способ</label>
+          {{ recycling_form.method(class='form-control') }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Локация</label>
+          {{ recycling_form.location(class='form-control') }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Комментарий</label>
+          {{ recycling_form.notes(class='form-control', rows='3') }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="modal fade" id="getFreeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Забрать бесплатно</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Свяжитесь с владельцем для согласования получения вещи.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

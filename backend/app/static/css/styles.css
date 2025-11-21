@@ -1,0 +1,35 @@
+:root{--bg:#0f172a;--panel:#111827;--text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--accent-2:#60a5fa;--danger:#ef4444}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#0b1220 0%,#0f172a 100%);color:var(--text);font:16px/1.55 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial}
+a{color:var(--accent-2);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.navbar{background:linear-gradient(90deg,#0b1220,#111827);border-bottom:1px solid #1f2937}
+.navbar .navbar-brand{font-weight:700;letter-spacing:.3px}
+.navbar .nav-link{color:var(--muted)}
+.navbar .nav-link:hover{color:var(--text)}
+
+.container{max-width:1140px}
+.card{background:rgba(17,24,39,.6);border:1px solid #1f2937;color:var(--text);box-shadow:0 4px 14px rgba(0,0,0,.25);border-radius:12px}
+.card-header{background:rgba(17,24,39,.85);border-bottom:1px solid #1f2937}
+.card-footer{background:rgba(17,24,39,.85);border-top:1px solid #1f2937}
+.badge.bg-success{background:linear-gradient(180deg,#16a34a,#15803d)!important}
+.badge.bg-warning{background:linear-gradient(180deg,#f59e0b,#d97706)!important}
+.badge.bg-primary{background:linear-gradient(180deg,#2563eb,#1d4ed8)!important}
+.badge.bg-secondary{background:linear-gradient(180deg,#6b7280,#4b5563)!important}
+.btn-primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);border:0}
+.btn-success{background:linear-gradient(180deg,#16a34a,#15803d);border:0}
+.btn-outline-secondary{border-color:#374151;color:#e5e7eb}
+.btn-outline-secondary:hover{background:#1f2937}
+.form-control,.form-select{background:#0b1220;border:1px solid #1f2937;color:var(--text)}
+.form-control:focus,.form-select:focus{border-color:#374151;box-shadow:none}
+.alert{border-radius:10px;border:1px solid #1f2937}
+footer.app-footer{margin-top:32px;padding:24px 0;border-top:1px solid #1f2937;color:var(--muted)}
+
+/* Небольшие утилиты интерфейса */
+.text-muted{color:var(--muted)!important}
+.shadow-sm{box-shadow:0 2px 10px rgba(0,0,0,.2)!important}
+.rounded-12{border-radius:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:991px){.grid-3{grid-template-columns:1fr}}

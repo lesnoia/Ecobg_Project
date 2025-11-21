@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Личный кабинет</h2>
+
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <h5 class="mb-0">Мои объявления</h5>
+  <a class="btn btn-sm btn-primary" href="{{ url_for('main.create_item') }}">Добавить объявление</a>
+</div>
+<div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+  {% for item in items %}
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="{{ url_for('main.item_detail', item_id=item.id) }}">{{ item.title }}</a></h5>
+          <div class="text-muted">{{ {'available':'Доступно','reserved':'Зарезервировано','donated':'Подарено','recycled':'Переработано'}.get(item.status, item.status) }}</div>
+        </div>
+        <div class="card-footer d-flex gap-2">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('main.edit_item', item_id=item.id) }}">Редактировать</a>
+          <form method="post" action="{{ url_for('main.delete_item', item_id=item.id) }}" onsubmit="return confirm('Удалить объявление?');">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <p>У вас пока нет объявлений.</p>
+  {% endfor %}
+</div>
+
+<h5 class="mb-3">Мои заявки на обмен</h5>
+<ul class="list-group mb-5">
+  {% for req in exchange_requests %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      На вещь: <a href="{{ url_for('main.item_detail', item_id=req.target_item_id) }}">#{{ req.target_item_id }}</a>
+      <span class="badge bg-secondary">{{ req.status }}</span>
+    </li>
+  {% else %}
+    <li class="list-group-item">Заявок пока нет.</li>
+  {% endfor %}
+</ul>
+
+<h5 class="mb-3">Пожертвования</h5>
+<ul class="list-group">
+  {% for d in donations %}
+    <li class="list-group-item">
+      Вещь #{{ d.item_id }} — {{ d.status }} ({{ d.donation_date.strftime('%d.%m.%Y') if d.donation_date else '' }})
+    </li>
+  {% else %}
+    <li class="list-group-item">Записей нет.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
