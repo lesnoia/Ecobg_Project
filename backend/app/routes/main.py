@@ -29,7 +29,7 @@ def index():
     """Главная страница с подборкой объявлений."""
 
     items = Item.query.order_by(Item.created_at.desc()).limit(12).all()
-    return render_template("main/index.html", items=items, title="ShelterShare")
+    return render_template("main/index.html", items=items, title="MUIVesg")
 
 
 @bp.route("/dashboard")
