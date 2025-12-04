@@ -9,7 +9,7 @@ from wtforms import (
     SubmitField,
     TextAreaField,
 )
-from wtforms.validators import DataRequired, Length, NumberRange, Optional
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, Email
 
 
 class ItemForm(FlaskForm):
@@ -59,3 +59,10 @@ class HelpTextForm(FlaskForm):
     key = HiddenField(default="help_text")
     body = TextAreaField("Справка", validators=[DataRequired(), Length(min=50)])
     submit = SubmitField("Сохранить справку")
+
+
+class FeedbackForm(FlaskForm):
+    name = StringField("Имя", validators=[DataRequired(), Length(max=120)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=120)])
+    message = TextAreaField("Сообщение", validators=[DataRequired(), Length(min=10, max=2000)])
+    submit = SubmitField("Отправить")
