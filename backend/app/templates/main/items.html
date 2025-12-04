@@ -38,6 +38,15 @@
   </div>
  </div>
 
+<div class="d-flex justify-content-end gap-2 mb-3">
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('main.export_items_docx') }}">
+    <i class="bi bi-file-earmark-word"></i> Экспорт DOCX
+  </a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('main.export_items_xlsx') }}">
+    <i class="bi bi-file-earmark-excel"></i> Экспорт XLSX
+  </a>
+</div>
+
 <div class="row row-cols-1 row-cols-md-3 g-4">
   {% for item in items %}
   <div class="col">
