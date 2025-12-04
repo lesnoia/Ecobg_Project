@@ -1,4 +1,4 @@
-"""Маршруты основной части приложения."""
+"""Маршруты основной части приложения"""
 from flask import abort, flash, redirect, render_template, request, url_for, send_file, current_app
 from flask_login import current_user, login_required
 from io import BytesIO
@@ -33,7 +33,7 @@ from . import bp
 
 @bp.route("/")
 def index():
-    """Главная страница с подборкой объявлений."""
+    """Главная страница с подборкой объявлений"""
 
     items = Item.query.order_by(Item.created_at.desc()).limit(12).all()
     return render_template("main/index.html", items=items, title="MUIVesg")
