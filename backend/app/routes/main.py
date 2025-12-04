@@ -1,12 +1,18 @@
 """Маршруты основной части приложения."""
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for, send_file, current_app
 from flask_login import current_user, login_required
+from io import BytesIO
+from docx import Document
+from openpyxl import Workbook
+import smtplib
+from email.message import EmailMessage
 
 from .. import db
 from ..forms import (
     DonationForm,
     ExchangeRequestForm,
     HelpTextForm,
+    FeedbackForm,
     ItemForm,
     RecyclingForm,
 )
@@ -20,6 +26,7 @@ from ..models import (
     Role,
     RecyclingOperation,
     SystemSetting,
+    FeedbackMessage,
 )
 from . import bp
 
@@ -82,6 +89,143 @@ def items_list():
         selected_status=status,
         selected_sort=sort,
     )
+
+
+# ===== Публичные страницы (10+) =====
+@bp.route("/about")
+def about():
+    return render_template("main/about.html", title="О нас")
+
+
+@bp.route("/contacts")
+def contacts():
+    return render_template("main/contacts.html", title="Контакты")
+
+
+@bp.route("/faq")
+def faq():
+    return render_template("main/faq.html", title="FAQ")
+
+
+@bp.route("/how-it-works")
+def howitworks():
+    return render_template("main/howitworks.html", title="Как это работает")
+
+
+@bp.route("/categories-page")
+def categories_page():
+    categories = Category.query.all()
+    return render_template("main/categories.html", title="Категории", categories=categories)
+
+
+@bp.route("/news")
+def news():
+    return render_template("main/news.html", title="Новости")
+
+
+@bp.route("/partners")
+def partners():
+    return render_template("main/partners.html", title="Партнёрам")
+
+
+@bp.route("/support")
+def support():
+    return render_template("main/support.html", title="Поддержка")
+
+
+@bp.route("/privacy")
+def privacy():
+    return render_template("main/privacy.html", title="Политика конфиденциальности")
+
+
+@bp.route("/terms")
+def terms():
+    return render_template("main/terms.html", title="Условия использования")
+
+
+# ===== Обратная связь =====
+@bp.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    form = FeedbackForm()
+    if form.validate_on_submit():
+        # Сохраняем сообщение в БД
+        msg = FeedbackMessage(name=form.name.data, email=form.email.data, message=form.message.data)
+        db.session.add(msg)
+        db.session.commit()
+
+        # Пытаемся отправить письмо администратору, если настроен SMTP
+        cfg = current_app.config
+        if cfg.get("MAIL_SERVER") and cfg.get("MAIL_DEFAULT_SENDER") and cfg.get("MAIL_ADMIN_TO"):
+            try:
+                email_msg = EmailMessage()
+                email_msg["From"] = cfg.get("MAIL_DEFAULT_SENDER")
+                email_msg["To"] = cfg.get("MAIL_ADMIN_TO")
+                email_msg["Subject"] = "Новое обращение с сайта"
+                body = (
+                    f"Имя: {form.name.data}\n"
+                    f"Email: {form.email.data}\n\n"
+                    f"Сообщение:\n{form.message.data}\n"
+                )
+                email_msg.set_content(body)
+
+                if cfg.get("MAIL_USE_SSL"):
+                    with smtplib.SMTP_SSL(cfg.get("MAIL_SERVER"), cfg.get("MAIL_PORT")) as server:
+                        if cfg.get("MAIL_USERNAME") and cfg.get("MAIL_PASSWORD"):
+                            server.login(cfg.get("MAIL_USERNAME"), cfg.get("MAIL_PASSWORD"))
+                        server.send_message(email_msg)
+                else:
+                    with smtplib.SMTP(cfg.get("MAIL_SERVER"), cfg.get("MAIL_PORT")) as server:
+                        if cfg.get("MAIL_USE_TLS"):
+                            server.starttls()
+                        if cfg.get("MAIL_USERNAME") and cfg.get("MAIL_PASSWORD"):
+                            server.login(cfg.get("MAIL_USERNAME"), cfg.get("MAIL_PASSWORD"))
+                        server.send_message(email_msg)
+            except Exception:
+                # Тихо игнорируем ошибку отправки, чтобы пользователь получил успех
+                pass
+
+        flash("Спасибо за обращение! Мы свяжемся с вами по email.", "success")
+        return redirect(url_for("main.feedback"))
+    return render_template("main/feedback.html", title="Обратная связь", form=form)
+
+
+# ===== Экспорт DOCX/XLSX =====
+@bp.route("/export/items.docx")
+def export_items_docx():
+    items = Item.query.order_by(Item.created_at.desc()).all()
+    doc = Document()
+    doc.add_heading("Список объявлений", 0)
+    for it in items:
+        p = doc.add_paragraph()
+        p.add_run(it.title).bold = True
+        p.add_run(f" — {it.category.name if it.category else 'Без категории'}\n")
+        p.add_run((it.description or "").strip())
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="items.docx", mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+@bp.route("/export/items.xlsx")
+def export_items_xlsx():
+    items = Item.query.order_by(Item.created_at.desc()).all()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Объявления"
+    ws.append(["ID", "Название", "Категория", "Цена", "Статус", "Создано"])
+    for it in items:
+        ws.append([
+            it.id,
+            it.title,
+            it.category.name if it.category else None,
+            it.price,
+            it.status,
+            it.created_at.strftime("%Y-%m-%d %H:%M") if it.created_at else "",
+        ])
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="items.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 @bp.route("/items/<int:item_id>")
