@@ -237,8 +237,19 @@ class ItemDocument(TimestampMixin, db.Model):
     item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
-
     item = db.relationship("Item", back_populates="documents")
+
+
+class FeedbackMessage(TimestampMixin, db.Model):
+    """Сообщения обратной связи от посетителей"""
+
+    __tablename__ = "feedback_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
 
 
 class ExchangeRequest(TimestampMixin, db.Model):
