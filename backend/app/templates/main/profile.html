@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Мой профиль</h2>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0">Личные данные</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Имя пользователя:</strong> {{ user.username }}
+        </div>
+        <div class="mb-3">
+          <strong>Email:</strong> {{ user.email }}
+        </div>
+        {% if user.full_name %}
+        <div class="mb-3">
+          <strong>ФИО:</strong> {{ user.full_name }}
+        </div>
+        {% endif %}
+        {% if user.phone %}
+        <div class="mb-3">
+          <strong>Телефон:</strong> {{ user.phone }}
+        </div>
+        {% endif %}
+        <div class="mb-3">
+          <strong>Дата регистрации:</strong> {{ user.created_at.strftime('%d.%m.%Y') if user.created_at else 'Не указана' }}
+        </div>
+        {% if user.roles %}
+        <div class="mb-3">
+          <strong>Роли:</strong>
+          {% for role_link in user.roles %}
+            <span class="badge bg-primary">{{ role_link.role.name }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <a href="{{ url_for('main.edit_profile') }}" class="btn btn-primary">Редактировать профиль</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@ from flask import request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
+import os
 from config import Config
 
 # Initialize extensions
@@ -12,7 +13,12 @@ login_manager.login_view = 'auth.login'
 migrate = Migrate()
 
 def create_app():
-    app = Flask(__name__)
+    # Определяем путь к статической папке
+    import os
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    static_folder = os.path.join(basedir, 'static')
+    
+    app = Flask(__name__, static_folder=static_folder)
     app.config.from_object(Config)
 
     # Initialize extensions
@@ -70,5 +76,9 @@ def create_app():
     # Это безопасно: существующие таблицы не трогаются, создаются только недостающие
     with app.app_context():
         db.create_all()
+        # Создаём папку для загрузок, если её нет
+        upload_folder = app.config.get('UPLOAD_FOLDER')
+        if upload_folder:
+            os.makedirs(upload_folder, exist_ok=True)
 
     return app

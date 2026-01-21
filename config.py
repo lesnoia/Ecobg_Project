@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = os.path.join(basedir, 'app/static/uploads')
+    UPLOAD_FOLDER = os.path.join(basedir, 'backend/app/static/uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # Максимальный размер файла 16MB
     # Email/SMTP (опционально для обратной связи)
     MAIL_SERVER = os.environ.get('MAIL_SERVER')

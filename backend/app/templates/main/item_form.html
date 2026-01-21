@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h2 class="mb-4">{{ title or 'Объявление' }}</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
   <div class="mb-3">
     {{ form.title.label(class='form-label') }}
@@ -29,10 +29,37 @@
     {{ form.is_free(class='form-check-input') }}
     {{ form.is_free.label(class='form-check-label') }}
   </div>
-  <div class="form-check mb-4">
+  <div class="form-check mb-3">
     {{ form.is_exchangeable(class='form-check-input') }}
     {{ form.is_exchangeable.label(class='form-check-label') }}
   </div>
+  <div class="mb-3">
+    {{ form.images.label(class='form-label') }}
+    {{ form.images(class='form-control', accept='image/*', multiple=True) }}
+    <small class="form-text text-muted">Можно выбрать несколько изображений (JPG, PNG, GIF)</small>
+    {% if form.images.errors %}
+      <div class="text-danger small">
+        {% for error in form.images.errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  {% if images %}
+  <div class="mb-3">
+    <label class="form-label">Текущие изображения:</label>
+    <div class="row">
+      {% for img in images %}
+      <div class="col-md-3 mb-2">
+        <img src="{{ url_for('static', filename='uploads/' + img.file_path) }}" class="img-thumbnail" style="max-height: 150px;">
+        {% if img.is_primary %}
+          <div class="small text-success">Основное</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   {{ form.submit(class='btn btn-primary') }}
 </form>
 {% endblock %}

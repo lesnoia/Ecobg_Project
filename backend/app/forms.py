@@ -1,5 +1,6 @@
 """WTForms для основных сущностей приложения."""
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     BooleanField,
     DecimalField,
@@ -33,6 +34,11 @@ class ItemForm(FlaskForm):
     )
     is_free = BooleanField("Отдаю бесплатно")
     is_exchangeable = BooleanField("Готов к обмену")
+    images = FileField(
+        "Фотографии",
+        validators=[Optional()],
+        render_kw={"multiple": True}
+    )
     submit = SubmitField("Сохранить")
 
 
@@ -66,3 +72,16 @@ class FeedbackForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email(), Length(max=120)])
     message = TextAreaField("Сообщение", validators=[DataRequired(), Length(min=10, max=2000)])
     submit = SubmitField("Отправить")
+
+
+class CommentForm(FlaskForm):
+    text = TextAreaField("Комментарий", validators=[DataRequired(), Length(min=1, max=1000)])
+    submit = SubmitField("Отправить комментарий")
+
+
+class ProfileEditForm(FlaskForm):
+    username = StringField("Имя пользователя", validators=[DataRequired(), Length(min=3, max=64)])
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    full_name = StringField("ФИО", validators=[Optional(), Length(max=120)])
+    phone = StringField("Телефон", validators=[Optional(), Length(max=32)])
+    submit = SubmitField("Сохранить изменения")

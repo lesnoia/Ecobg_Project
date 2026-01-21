@@ -81,6 +81,12 @@ class User(UserMixin, TimestampMixin, db.Model):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    comments = db.relationship(
+        "Comment",
+        back_populates="user",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
@@ -204,6 +210,17 @@ class Item(TimestampMixin, db.Model):
         back_populates="item",
         cascade="all, delete-orphan",
     )
+    images = db.relationship(
+        "ItemImage",
+        back_populates="item",
+        cascade="all, delete-orphan",
+    )
+    comments = db.relationship(
+        "Comment",
+        back_populates="item",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"Item(title={self.title!r}, status={self.status})"
@@ -238,6 +255,33 @@ class ItemDocument(TimestampMixin, db.Model):
     file_path = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
     item = db.relationship("Item", back_populates="documents")
+
+
+class ItemImage(TimestampMixin, db.Model):
+    """Изображения для объявлений"""
+
+    __tablename__ = "item_images"
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    file_path = db.Column(db.String(255), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False)  # Основное изображение
+    item = db.relationship("Item", back_populates="images")
+
+
+class Comment(TimestampMixin, db.Model):
+    """Комментарии под объявлениями"""
+
+    __tablename__ = "comments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False)
+
+    item = db.relationship("Item", back_populates="comments")
+    user = db.relationship("User", back_populates="comments")
 
 
 class FeedbackMessage(TimestampMixin, db.Model):

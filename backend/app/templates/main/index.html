@@ -14,12 +14,21 @@
 
 <h2 class="mb-3">Последние объявления</h2>
 <div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for item in items %}
+    {% for item, first_image in items_with_images %}
         <div class="col">
             <div class="card h-100 overflow-hidden">
+                {% if first_image %}
+                <div style="aspect-ratio:16/9; overflow:hidden; background:#1f2937;">
+                  <img src="{{ url_for('static', filename='uploads/' + first_image.file_path) }}" 
+                       class="w-100 h-100" 
+                       style="object-fit:cover;" 
+                       alt="{{ item.title }}">
+                </div>
+                {% else %}
                 <div style="aspect-ratio:16/9; background:linear-gradient(135deg, #1f2937, #0b1220); display:flex; align-items:center; justify-content:center; color:#9ca3af;">
                   <span>Фото будет здесь</span>
                 </div>
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ item.title }}</h5>
                     <p class="card-text text-muted">{{ item.category.name if item.category else "Без категории" }}</p>

@@ -6,6 +6,9 @@ from docx import Document
 from openpyxl import Workbook
 import smtplib
 from email.message import EmailMessage
+import os
+from werkzeug.utils import secure_filename
+from PIL import Image
 
 from .. import db
 from ..forms import (
@@ -15,6 +18,8 @@ from ..forms import (
     FeedbackForm,
     ItemForm,
     RecyclingForm,
+    CommentForm,
+    ProfileEditForm,
 )
 from ..models import (
     Category,
@@ -27,6 +32,8 @@ from ..models import (
     RecyclingOperation,
     SystemSetting,
     FeedbackMessage,
+    ItemImage,
+    Comment,
 )
 from . import bp
 
@@ -36,7 +43,12 @@ def index():
     """Главная страница с подборкой объявлений"""
 
     items = Item.query.order_by(Item.created_at.desc()).limit(12).all()
-    return render_template("main/index.html", items=items, title="MUIVesg")
+    # Загружаем первое изображение для каждого объявления
+    items_with_images = []
+    for item in items:
+        first_image = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.is_primary.desc(), ItemImage.created_at).first()
+        items_with_images.append((item, first_image))
+    return render_template("main/index.html", items_with_images=items_with_images, title="MUIVesg")
 
 
 @bp.route("/dashboard")
@@ -80,10 +92,15 @@ def items_list():
 
     categories = Category.query.all()
     items = query.all()
+    # Загружаем первое изображение для каждого объявления
+    items_with_images = []
+    for item in items:
+        first_image = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.is_primary.desc(), ItemImage.created_at).first()
+        items_with_images.append((item, first_image))
     return render_template(
         "main/items.html",
         title="Объявления",
-        items=items,
+        items_with_images=items_with_images,
         categories=categories,
         selected_category=category_id,
         selected_status=status,
@@ -237,6 +254,7 @@ def item_detail(item_id: int):
     recycling_form = RecyclingForm(prefix="recycle")
     exchange_form = ExchangeRequestForm(prefix="exchange")
     donation_form = DonationForm(prefix="donate")
+    comment_form = CommentForm(prefix="comment")
 
     if current_user.is_authenticated:
         exchange_form.offered_item_id.choices = [
@@ -251,6 +269,21 @@ def item_detail(item_id: int):
     if current_user.is_authenticated and current_user.id == item.owner_id:
         incoming = [r for r in item.incoming_requests if r.status == "pending"]
 
+    # Получаем изображения объявления
+    images = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.is_primary.desc(), ItemImage.created_at).all()
+    
+    # Получаем комментарии (не удаленные)
+    comments = Comment.query.filter_by(item_id=item.id, is_deleted=False).order_by(Comment.created_at.desc()).all()
+
+    # Проверяем права на удаление (владелец, менеджер или администратор)
+    can_delete = False
+    if current_user.is_authenticated:
+        can_delete = (
+            current_user.id == item.owner_id or
+            current_user.has_role("manager") or
+            current_user.has_role("admin")
+        )
+
     return render_template(
         "main/item_detail.html",
         title=item.title,
@@ -258,7 +291,11 @@ def item_detail(item_id: int):
         recycling_form=recycling_form,
         exchange_form=exchange_form,
         donation_form=donation_form,
+        comment_form=comment_form,
         incoming_requests=incoming,
+        images=images,
+        comments=comments,
+        can_delete=can_delete,
     )
 
 
@@ -318,6 +355,60 @@ def decline_request(req_id: int):
     return redirect(url_for("main.item_detail", item_id=item.id))
 
 
+def save_uploaded_images(item_id, files):
+    """Сохраняет загруженные изображения для объявления"""
+    if not files:
+        return
+    
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+    
+    primary_set = False
+    for idx, file in enumerate(files):
+        if file and file.filename:
+            # Проверяем расширение файла
+            filename = secure_filename(file.filename)
+            if '.' not in filename:
+                continue
+            ext = filename.rsplit('.', 1)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                continue
+            
+            # Добавляем префикс с ID объявления и индексом для уникальности
+            name, ext = os.path.splitext(filename)
+            filename = f"item_{item_id}_{idx}_{name}{ext}"
+            filepath = os.path.join(upload_folder, filename)
+            
+            # Сохраняем файл
+            file.save(filepath)
+            
+            # Проверяем, что это действительно изображение
+            try:
+                img = Image.open(filepath)
+                # Конвертируем в RGB, если нужно
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    img = img.convert('RGB')
+                # Сохраняем оригинал
+                img.save(filepath, optimize=True, quality=85)
+            except Exception as e:
+                # Если не удалось обработать как изображение, удаляем файл
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                continue
+            
+            # Создаем запись в БД
+            image = ItemImage(
+                item_id=item_id,
+                file_path=filename,
+                is_primary=(idx == 0 and not primary_set)
+            )
+            if idx == 0:
+                primary_set = True
+            db.session.add(image)
+
+
 @bp.route("/items/create", methods=["GET", "POST"])
 @login_required
 def create_item():
@@ -338,6 +429,13 @@ def create_item():
             owner_id=current_user.id,
         )
         db.session.add(item)
+        db.session.flush()  # Получаем ID объявления
+        
+        # Обрабатываем загруженные изображения
+        if 'images' in request.files:
+            files = request.files.getlist('images')
+            save_uploaded_images(item.id, files)
+        
         db.session.commit()
         flash("Объявление опубликовано", "success")
         return redirect(url_for("main.item_detail", item_id=item.id))
@@ -500,20 +598,47 @@ def edit_item(item_id: int):
         item.price = form.price.data
         item.is_free = form.is_free.data
         item.is_exchangeable = form.is_exchangeable.data
+        
+        # Обрабатываем новые загруженные изображения
+        if 'images' in request.files:
+            files = request.files.getlist('images')
+            save_uploaded_images(item.id, files)
+        
         db.session.commit()
         flash("Объявление обновлено", "success")
         return redirect(url_for("main.item_detail", item_id=item.id))
-    return render_template("main/item_form.html", title="Редактирование объявления", form=form)
+    
+    # Получаем существующие изображения для отображения
+    images = ItemImage.query.filter_by(item_id=item.id).all()
+    return render_template("main/item_form.html", title="Редактирование объявления", form=form, images=images)
 
 
 @bp.route("/items/<int:item_id>/delete", methods=["POST"])
 @login_required
 def delete_item(item_id: int):
-    """Удаление объявления владельцем."""
+    """Удаление объявления владельцем, менеджером или администратором."""
 
     item = Item.query.get_or_404(item_id)
-    if item.owner_id != current_user.id:
+    # Проверяем права: владелец, менеджер или администратор
+    can_delete = (
+        item.owner_id == current_user.id or
+        current_user.has_role("manager") or
+        current_user.has_role("admin")
+    )
+    if not can_delete:
         abort(403)
+    
+    # Удаляем связанные изображения
+    images = ItemImage.query.filter_by(item_id=item.id).all()
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    for img in images:
+        filepath = os.path.join(upload_folder, img.file_path)
+        if os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
+    
     db.session.delete(item)
     db.session.commit()
     flash("Объявление удалено", "success")
@@ -574,3 +699,87 @@ def admin_users():
     users = User.query.order_by(User.username).all()
     roles = Role.query.order_by(Role.name).all()
     return render_template("admin/users.html", title="Пользователи и роли", users=users, roles=roles)
+
+
+@bp.route("/profile")
+@login_required
+def profile():
+    """Страница профиля пользователя"""
+    return render_template("main/profile.html", title="Мой профиль", user=current_user)
+
+
+@bp.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    """Редактирование профиля пользователя"""
+    form = ProfileEditForm(obj=current_user)
+    
+    if form.validate_on_submit():
+        # Проверяем уникальность username и email (если изменились)
+        existing_user = User.query.filter(User.username == form.username.data, User.id != current_user.id).first()
+        if existing_user:
+            flash("Такое имя пользователя уже занято", "danger")
+            return render_template("main/profile_edit.html", title="Редактирование профиля", form=form)
+        
+        existing_email = User.query.filter(User.email == form.email.data, User.id != current_user.id).first()
+        if existing_email:
+            flash("Такой email уже зарегистрирован", "danger")
+            return render_template("main/profile_edit.html", title="Редактирование профиля", form=form)
+        
+        # Обновляем данные
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        current_user.full_name = form.full_name.data
+        current_user.phone = form.phone.data
+        
+        db.session.commit()
+        flash("Профиль обновлен", "success")
+        return redirect(url_for("main.profile"))
+    
+    return render_template("main/profile_edit.html", title="Редактирование профиля", form=form)
+
+
+@bp.route("/items/<int:item_id>/comment", methods=["POST"])
+@login_required
+def add_comment(item_id: int):
+    """Добавление комментария к объявлению"""
+    item = Item.query.get_or_404(item_id)
+    form = CommentForm(prefix="comment")
+    
+    if form.validate_on_submit():
+        comment = Comment(
+            item_id=item.id,
+            user_id=current_user.id,
+            text=form.text.data
+        )
+        db.session.add(comment)
+        db.session.commit()
+        flash("Комментарий добавлен", "success")
+    else:
+        flash("Ошибка при добавлении комментария", "danger")
+    
+    return redirect(url_for("main.item_detail", item_id=item.id))
+
+
+@bp.route("/comments/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def delete_comment(comment_id: int):
+    """Удаление комментария (автор, менеджер или администратор)"""
+    comment = Comment.query.get_or_404(comment_id)
+    
+    # Проверяем права: автор комментария, менеджер или администратор
+    can_delete = (
+        comment.user_id == current_user.id or
+        current_user.has_role("manager") or
+        current_user.has_role("admin")
+    )
+    
+    if not can_delete:
+        abort(403)
+    
+    # Мягкое удаление (помечаем как удаленный)
+    comment.is_deleted = True
+    db.session.commit()
+    flash("Комментарий удален", "success")
+    
+    return redirect(url_for("main.item_detail", item_id=comment.item_id))

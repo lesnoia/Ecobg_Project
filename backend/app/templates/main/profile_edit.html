@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Редактирование профиля</h2>
+
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.username.label(class='form-label') }}
+    {{ form.username(class='form-control') }}
+    {% if form.username.errors %}
+      <div class="text-danger small">
+        {% for error in form.username.errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.email.label(class='form-label') }}
+    {{ form.email(class='form-control') }}
+    {% if form.email.errors %}
+      <div class="text-danger small">
+        {% for error in form.email.errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.full_name.label(class='form-label') }}
+    {{ form.full_name(class='form-control') }}
+    {% if form.full_name.errors %}
+      <div class="text-danger small">
+        {% for error in form.full_name.errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.phone.label(class='form-label') }}
+    {{ form.phone(class='form-control') }}
+    {% if form.phone.errors %}
+      <div class="text-danger small">
+        {% for error in form.phone.errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.submit(class='btn btn-primary') }}
+    <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">Отмена</a>
+  </div>
+</form>
+{% endblock %}

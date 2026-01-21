@@ -5,6 +5,32 @@
     <h2 class="mb-2">{{ item.title }}</h2>
     <p class="text-muted">Добавлено {{ item.created_at.strftime('%d.%m.%Y') if item.created_at else '' }}</p>
 
+    {% if images %}
+    <div class="card mb-3 shadow-sm rounded-12">
+      <div class="card-body">
+        <div id="itemImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            {% for img in images %}
+            <div class="carousel-item {% if loop.first %}active{% endif %}">
+              <img src="{{ url_for('static', filename='uploads/' + img.file_path) }}" class="d-block w-100" style="max-height: 500px; object-fit: contain;" alt="Изображение {{ loop.index }}">
+            </div>
+            {% endfor %}
+          </div>
+          {% if images|length > 1 %}
+          <button class="carousel-control-prev" type="button" data-bs-target="#itemImagesCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Предыдущее</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#itemImagesCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Следующее</span>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="card mb-3 shadow-sm rounded-12">
       <div class="card-body">
         <p class="mb-0">{{ item.description }}</p>
@@ -60,6 +86,7 @@
       <div class="card-body">
         {% if current_user.is_authenticated %}
           {% if current_user.id == item.owner_id %}
+            <a href="{{ url_for('main.edit_item', item_id=item.id) }}" class="btn btn-outline-primary w-100 mb-2">Редактировать</a>
             {% if item.status == 'available' %}
               <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#donateModal">Отметить как подаренное</button>
               <button class="btn btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#recycleModal">Отметить как переработанное</button>
@@ -78,6 +105,11 @@
                 </form>
               {% endif %}
             {% endif %}
+          {% endif %}
+          {% if can_delete %}
+            <form method="post" action="{{ url_for('main.delete_item', item_id=item.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить это объявление?');" class="mb-2">
+              <button class="btn btn-outline-danger w-100" type="submit">Удалить объявление</button>
+            </form>
           {% endif %}
         {% else %}
           <a class="btn btn-primary w-100" href="{{ url_for('auth.login', next=request.path) }}">Войдите, чтобы взаимодействовать</a>
@@ -226,6 +258,66 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Комментарии -->
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm rounded-12">
+      <div class="card-header">
+        <h5 class="mb-0">Комментарии ({{ comments|length }})</h5>
+      </div>
+      <div class="card-body">
+        {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('main.add_comment', item_id=item.id) }}" class="mb-4">
+          {{ comment_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ comment_form.text.label(class='form-label') }}
+            {{ comment_form.text(class='form-control', rows='3') }}
+            {% if comment_form.text.errors %}
+              <div class="text-danger small">
+                {% for error in comment_form.text.errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          {{ comment_form.submit(class='btn btn-primary') }}
+        </form>
+        {% else %}
+        <div class="alert alert-info">
+          <a href="{{ url_for('auth.login', next=request.path) }}">Войдите</a>, чтобы оставить комментарий
+        </div>
+        {% endif %}
+
+        <div class="comments-list">
+          {% for comment in comments %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>{{ comment.user.username }}</strong>
+                  {% if comment.user.full_name %}
+                    <span class="text-muted">({{ comment.user.full_name }})</span>
+                  {% endif %}
+                  <small class="text-muted ms-2">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') if comment.created_at else '' }}</small>
+                </div>
+                {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.has_role('manager') or current_user.has_role('admin')) %}
+                <form method="post" action="{{ url_for('main.delete_comment', comment_id=comment.id) }}" onsubmit="return confirm('Удалить комментарий?');">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                </form>
+                {% endif %}
+              </div>
+              <p class="mb-0">{{ comment.text }}</p>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted">Пока нет комментариев. Будьте первым!</p>
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
