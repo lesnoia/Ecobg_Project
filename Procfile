@@ -1,1 +1,1 @@
-web: python scripts/init_db.py && python scripts/seed_basics.py && python scripts/seed_help.py && gunicorn --bind 0.0.0.0:$PORT main:app
+web: python scripts/init_db.py && python scripts/seed_basics.py && python scripts/seed_help.py && sleep 5 && gunicorn --bind 0.0.0.0:$PORT main:app
