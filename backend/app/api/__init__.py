@@ -1,4 +1,4 @@
-"""REST API Blueprint для ЭкоБарахолка.
+"""REST API Blueprint для MUIVesg.
 Возвращает JSON для клиентских приложений (веб/десктоп PySide6).
 """
 from flask import Blueprint

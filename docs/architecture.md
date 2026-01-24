@@ -1,4 +1,4 @@
-# Архитектура «ЭкоБарахолка»
+# Архитектура «MUIVesg»
 
 ## Слои системы
 - API-слой: Flask Blueprints (`backend/app/api`, `backend/app/routes`) — REST JSON и серверные HTML-представления.

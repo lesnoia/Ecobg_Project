@@ -36,7 +36,7 @@
   <div class="mb-3">
     {{ form.images.label(class='form-label') }}
     {{ form.images(class='form-control', accept='image/*', multiple=True) }}
-    <small class="form-text text-muted">Можно выбрать несколько изображений (JPG, PNG, GIF)</small>
+    <small class="form-text text-muted">Загрузите изображение (jpg, jpeg, png, gif). После создания объявления можно будет добавить ещё несколько изображений</small>
     {% if form.images.errors %}
       <div class="text-danger small">
         {% for error in form.images.errors %}
