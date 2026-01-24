@@ -361,7 +361,7 @@ class DisposalRequest(TimestampMixin, db.Model):
     status = db.Column(db.String(20), default="pending")
     hazard_notes = db.Column(db.Text)
 
-    item = db.relationship("Item", backref=db.backref("disposal_requests", cascade="all, delete-orphan", overlaps="disposal_requests"), overlaps="item")
+    item = db.relationship("Item", backref=db.backref("disposal_requests", cascade="all, delete-orphan"))
     requested_by = db.relationship("User", foreign_keys=[requested_by_id])
 
 
