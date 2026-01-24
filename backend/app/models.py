@@ -210,18 +210,10 @@ class Item(TimestampMixin, db.Model):
         back_populates="item",
         cascade="all, delete-orphan",
     )
-    images = db.relationship(
-        "ItemImage",
-        backref="item",
-        cascade="all, delete-orphan",
-        lazy=True
-    )
-    comments = db.relationship(
-        "Comment",
-        back_populates="item",
-        cascade="all, delete-orphan",
-        lazy=True
-    )
+    images = db.relationship("ItemImage", back_populates="item", cascade="all, delete-orphan", lazy=True)
+    comments = db.relationship("Comment", back_populates="item", cascade="all, delete-orphan", lazy=True)
+    disposal_requests = db.relationship("DisposalRequest", back_populates="item", cascade="all, delete-orphan",
+                                        lazy=True)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"Item(title={self.title!r}, status={self.status})"
@@ -361,7 +353,7 @@ class DisposalRequest(TimestampMixin, db.Model):
     status = db.Column(db.String(20), default="pending")
     hazard_notes = db.Column(db.Text)
 
-    item = db.relationship("Item", backref=db.backref("disposal_requests", cascade="all, delete-orphan"))
+    item = db.relationship("Item", back_populates="disposal_requests")
     requested_by = db.relationship("User", foreign_keys=[requested_by_id])
 
 
