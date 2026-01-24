@@ -1,0 +1,1 @@
+web: python scripts/init_db.py && python scripts/seed_basics.py && python scripts/seed_help.py && gunicorn main:app
