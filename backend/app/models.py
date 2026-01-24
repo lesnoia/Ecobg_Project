@@ -379,7 +379,7 @@ class ActivityLog(TimestampMixin, db.Model):
 
 
 class Notification(TimestampMixin, db.Model):
-    """Уведомления пользователям"""
+    """Уведомления  пользователям"""
 
     __tablename__ = "notifications"
 
