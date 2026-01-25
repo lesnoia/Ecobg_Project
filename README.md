@@ -3,7 +3,7 @@
 Пользователь: логин student1 / пароль student1<br>
 Менеджер: логин manager1 / пароль manager1<br>
 Администратор: логин admin1 / пароль admin1<br>
-<br>
+<br><br>
 Мартынов Андрей Андреевич<br>
 Студент МУИВ<br>
 MUIVesg<br>
