@@ -210,10 +210,10 @@ class Item(TimestampMixin, db.Model):
         back_populates="item",
         cascade="all, delete-orphan",
     )
-    images = db.relationship("ItemImage", back_populates="item", cascade="all, delete-orphan", lazy=True)
-    comments = db.relationship("Comment", back_populates="item", cascade="all, delete-orphan", lazy=True)
-    disposal_requests = db.relationship("DisposalRequest", back_populates="item", cascade="all, delete-orphan",
-                                        lazy=True)
+    images = db.relationship("ItemImage", back_populates="item", cascade="all, delete-orphan")
+    comments = db.relationship("Comment", back_populates="item", cascade="all, delete-orphan")
+    recycling_operations = db.relationship("RecyclingOperation", back_populates="item", cascade="all, delete-orphan")
+    disposal_requests = db.relationship("DisposalRequest", back_populates="item", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"Item(title={self.title!r}, status={self.status})"
@@ -321,7 +321,7 @@ class Donation(TimestampMixin, db.Model):
     status = db.Column(db.String(20), default="pending")
     confirmation_doc = db.Column(db.String(255))
 
-    item = db.relationship("Item", backref="donations")
+    item = db.relationship("Item", backref=db.backref("donations", cascade="all, delete-orphan"))
     donor = db.relationship("User", foreign_keys=[donor_id], back_populates="donations")
     recipient = db.relationship("User", foreign_keys=[recipient_id])
 
@@ -338,7 +338,7 @@ class RecyclingOperation(TimestampMixin, db.Model):
     location = db.Column(db.String(255))
     notes = db.Column(db.Text)
 
-    item = db.relationship("Item", backref="recycling_operations")
+    item = db.relationship("Item", back_populates="recycling_operations")
     operator = db.relationship("User", foreign_keys=[operator_id])
 
 
