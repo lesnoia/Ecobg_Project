@@ -305,7 +305,7 @@ class ExchangeRequest(TimestampMixin, db.Model):
     message = db.Column(db.Text)
 
     requester = db.relationship("User", foreign_keys=[requester_id])
-    target_item = db.relationship("Item", foreign_keys=[target_item_id], backref="incoming_requests")
+    target_item = db.relationship("Item", foreign_keys=[target_item_id], backref=db.backref("incoming_requests", cascade="all, delete-orphan"))
     offered_item = db.relationship("Item", foreign_keys=[offered_item_id], backref="offered_in_requests")
 
 
