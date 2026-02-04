@@ -33,3 +33,152 @@ footer.app-footer{margin-top:32px;padding:24px 0;border-top:1px solid #1f2937;co
 .rounded-12{border-radius:12px}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media (max-width:991px){.grid-3{grid-template-columns:1fr}}
+
+/* СТИЛИ МОДАЛЬНЫХ ОКОН */
+
+/* Оверлей (фон за модальным окном) */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.modal-backdrop.show {
+    opacity: 1 !important;
+}
+
+/* Основной контейнер модального окна */
+.modal-content {
+    background: linear-gradient(180deg, #111827 0%, #0b1220 100%) !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 12px !important;
+    color: #e5e7eb !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Заголовок модального окна */
+.modal-header {
+    background: rgba(17, 24, 39, 0.9) !important;
+    border-bottom: 1px solid #1f2937 !important;
+    color: #e5e7eb !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1rem 1.5rem !important;
+}
+
+.modal-title {
+    color: #e5e7eb !important;
+    font-weight: 600 !important;
+}
+
+/* Кнопка закрытия */
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+    opacity: 0.7 !important;
+}
+
+.btn-close:hover {
+    opacity: 1 !important;
+}
+
+/* Тело модального окна */
+.modal-body {
+    background: transparent !important;
+    color: #e5e7eb !important;
+    padding: 1.5rem !important;
+}
+
+/* Подвал модального окна */
+.modal-footer {
+    background: rgba(17, 24, 39, 0.9) !important;
+    border-top: 1px solid #1f2937 !important;
+    color: #e5e7eb !important;
+    border-radius: 0 0 12px 12px !important;
+    padding: 1rem 1.5rem !important;
+}
+
+/* СТИЛИ ДЛЯ ФОРМ ВНУТРИ МОДАЛЬНЫХ ОКОН */
+
+/* Все текстовые элементы внутри модального окна */
+.modal-content label,
+.modal-content .form-label,
+.modal-content p,
+.modal-content div,
+.modal-content span {
+    color: #e5e7eb !important;
+}
+
+/* Поля ввода */
+.modal-content .form-control,
+.modal-content .form-select,
+.modal-content textarea {
+    background-color: #0b1220 !important;
+    border: 1px solid #1f2937 !important;
+    color: #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus,
+.modal-content textarea:focus {
+    background-color: #0b1220 !important;
+    border-color: #3b82f6 !important;
+    color: #e5e7eb !important;
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Placeholder текста */
+.modal-content .form-control::placeholder,
+.modal-content .form-select::placeholder {
+    color: #6b7280 !important;
+}
+
+/* Селекты */
+.modal-content .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+
+/* Кнопки в модальном окне */
+.modal-content .btn {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.modal-content .btn-primary {
+    background: linear-gradient(180deg, #2563eb, #1d4ed8) !important;
+    border: none !important;
+}
+
+.modal-content .btn-secondary {
+    background: linear-gradient(180deg, #4b5563, #374151) !important;
+    border: none !important;
+    color: #e5e7eb !important;
+}
+
+.modal-content .btn-success {
+    background: linear-gradient(180deg, #16a34a, #15803d) !important;
+    border: none !important;
+}
+
+/* ДОПОЛНИТЕЛЬНЫЕ СТИЛИ */
+
+/* Текст справки */
+.modal-content .form-text,
+.modal-content small.text-muted {
+    color: #9ca3af !important;
+}
+
+/* Оповещения внутри модальных окон */
+.modal-content .alert {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    color: #93c5fd !important;
+    border-radius: 8px !important;
+}
+
+.modal-content .alert-info {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    color: #93c5fd !important;
+}
