@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-3">Обратная связь</h1>
+<form method="post" class="card p-3">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.name.label(class="form-label") }}
+    {{ form.name(class="form-control") }}
+    {% for e in form.name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  </div>
+  <div class="mb-3">
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control") }}
+    {% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  </div>
+  <div class="mb-3">
+    {{ form.message.label(class="form-label") }}
+    {{ form.message(class="form-control", rows=5) }}
+    {% for e in form.message.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  </div>
+  <div>
+    {{ form.submit(class="btn btn-primary") }}
+  </div>
+</form>
+{% endblock %}
